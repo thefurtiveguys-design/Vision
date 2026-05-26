@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vision · Messagerie d'équipe</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #08080c;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+      color: #d1d5db;
+    }
+
+    .app-container {
+      width: 1340px;
+      max-width: 100%;
+      height: 860px;
+      max-height: 95vh;
+      background: #111116;
+      border-radius: 28px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.07);
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* SIDEBAR GAUCHE */
+    .sidebar {
+      width: 260px;
+      background: #16161b;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 18px 16px 12px;
+      font-weight: 650;
+      font-size: 1.05rem;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .sidebar-header i {
+      width: 22px;
+      height: 22px;
+      color: #818cf8;
+    }
+
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .nav-section {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .nav-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #6b7280;
+      padding: 6px 10px 4px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .nav-label i {
+      width: 14px;
+      height: 14px;
+      opacity: 0.8;
+    }
+
+    .channel-item, .dm-item, .task-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      color: #9ca3af;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 450;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .channel-item i, .dm-item i, .task-item i {
+      width: 16px;
+      height: 16px;
+      color: #6b7280;
+    }
+    .channel-item:hover, .dm-item:hover, .task-item:hover {
+      background: rgba(255,255,255,0.05);
+      color: #e5e7eb;
+    }
+    .channel-item.active, .dm-item.active, .task-item.active {
+      background: rgba(99, 102, 241, 0.2);
+      color: #c7d2fe;
+      font-weight: 550;
+    }
+    .channel-item.active i, .dm-item.active i, .task-item.active i {
+      color: #818cf8;
+    }
+
+    .dm-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: #374151;
+      font-size: 0.65rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #d1d5db;
+      margin-right: 2px;
+    }
+    .unread-badge {
+      margin-left: auto;
+      background: #818cf8;
+      color: white;
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-left: auto;
+      background: #4ade80;
+    }
+    .status-dot.away { background: #f59e0b; }
+    .status-dot.offline { background: #6b7280; }
+
+    .sidebar-footer {
+      padding: 10px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .new-message-btn {
+      width: 100%;
+      background: #818cf8;
+      border: none;
+      color: white;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .new-message-btn:hover {
+      background: #6d78e8;
+      transform: scale(1.01);
+    }
+    .new-message-btn i {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ZONE PRINCIPALE */
+    .main-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #1c1c21;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #1c1c21;
+      z-index: 2;
+    }
+    .search-box {
+      flex: 1;
+      max-width: 400px;
+      background: #26262b;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      padding: 6px 14px;
+      gap: 8px;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: all 0.2s;
+    }
+    .search-box i {
+      width: 16px;
+      height: 16px;
+      color: #6b7280;
+    }
+    .search-box input {
+      background: transparent;
+      border: none;
+      color: #f3f4f6;
+      font-size: 0.85rem;
+      width: 100%;
+      outline: none;
+    }
+    .search-box input::placeholder {
+      color: #6b7280;
+    }
+    .search-box:focus-within {
+      border-color: #818cf8;
+      background: #2a2a30;
+    }
+
+    .channel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #f3f4f6;
+      margin-left: 10px;
+    }
+    .channel-header i {
+      width: 20px;
+      height: 20px;
+      color: #9ca3af;
+    }
+
+    .chat-view {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    .message-feed {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .message {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      animation: fadeIn 0.2s;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } }
+    .msg-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #374151;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 650;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      color: #d1d5db;
+    }
+    .msg-body {
+      background: #26262b;
+      border-radius: 14px;
+      padding: 10px 16px;
+      max-width: 75%;
+      position: relative;
+    }
+    .msg-author {
+      font-size: 0.8rem;
+      font-weight: 650;
+      color: #a5b4fc;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .msg-time {
+      font-size: 0.65rem;
+      color: #6b7280;
+      font-weight: 400;
+    }
+    .msg-text {
+      font-size: 0.9rem;
+      color: #e5e7eb;
+      line-height: 1.5;
+    }
+    .msg-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      align-items: center;
+    }
+    .msg-action-btn {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      transition: color 0.2s;
+    }
+    .msg-action-btn:hover {
+      color: #e5e7eb;
+    }
+    .msg-action-btn i {
+      width: 14px;
+      height: 14px;
+    }
+    .reaction-badge {
+      background: #2e2e36;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .reaction-badge:hover {
+      background: #3a3a44;
+    }
+
+    .message-input-area {
+      padding: 12px 20px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: #1c1c21;
+    }
+    .message-input {
+      flex: 1;
+      background: #26262b;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 10px 16px;
+      color: #f3f4f6;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .message-input:focus {
+      border-color: #818cf8;
+    }
+    .input-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .icon-btn:hover {
+      background: #2e2e36;
+      color: #e5e7eb;
+    }
+    .icon-btn i {
+      width: 20px;
+      height: 20px;
+    }
+    .send-btn {
+      background: #818cf8;
+      border: none;
+      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      transition: background 0.2s;
+    }
+    .send-btn:hover {
+      background: #6d78e8;
+    }
+    .send-btn i {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* VUES TÂCHES */
+    .task-view {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 20px 24px;
+      overflow-y: auto;
+      gap: 14px;
+    }
+    .task-view.active {
+      display: flex;
+    }
+    .task-card {
+      background: #26262b;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .task-card:hover {
+      background: #2e2e35;
+    }
+    .task-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #6b7280;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: transparent;
+      transition: all 0.2s;
+    }
+    .task-card.done .task-checkbox {
+      background: #818cf8;
+      border-color: #818cf8;
+      color: white;
+    }
+    .task-title {
+      font-size: 0.9rem;
+      color: #e5e7eb;
+    }
+    .task-card.done .task-title {
+      text-decoration: line-through;
+      color: #6b7280;
+    }
+    .task-assignee {
+      margin-left: auto;
+      font-size: 0.7rem;
+      background: #374151;
+      padding: 4px 10px;
+      border-radius: 10px;
+      color: #d1d5db;
+    }
+
+    /* PANNEAU DÉTAIL (THREAD) */
+    .detail-panel {
+      width: 0;
+      overflow: hidden;
+      background: #16161b;
+      border-left: 1px solid rgba(255,255,255,0.05);
+      transition: width 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .detail-panel.open {
+      width: 320px;
+    }
+    .detail-header {
+      padding: 16px;
+      font-weight: 650;
+      color: #ffffff;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .detail-header i {
+      width: 18px;
+      height: 18px;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+    .detail-thread {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .thread-message {
+      background: #1e1e24;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: #d1d5db;
+    }
+    .thread-input {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 12px;
+      display: flex;
+      gap: 8px;
+    }
+    .thread-input input {
+      flex: 1;
+      background: #26262b;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 0.8rem;
+    }
+
+    .empty-state {
+      color: #6b7280;
+      font-size: 0.9rem;
+      padding: 20px;
+      text-align: center;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <i data-lucide="eye"></i> Vision
+    </div>
+    <div class="sidebar-scroll">
+      <div class="nav-section">
+        <div class="nav-label"><i data-lucide="hash"></i> Canaux</div>
+        <button class="channel-item active" data-channel="general"><i data-lucide="hash"></i> général</button>
+        <button class="channel-item" data-channel="lancement-nova"><i data-lucide="hash"></i> lancement-nova</button>
+        <button class="channel-item" data-channel="design-system"><i data-lucide="hash"></i> design-system</button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label"><i data-lucide="message-square"></i> Messages directs</div>
+        <button class="dm-item" data-dm="camille">
+          <span class="dm-avatar">CM</span> Camille M. <span class="status-dot"></span>
+        </button>
+        <button class="dm-item" data-dm="julien">
+          <span class="dm-avatar">JD</span> Julien D. <span class="status-dot away"></span>
+        </button>
+        <button class="dm-item" data-dm="sarah">
+          <span class="dm-avatar">SL</span> Sarah L. <span class="unread-badge">2</span>
+        </button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label"><i data-lucide="check-square"></i> Tâches</div>
+        <button class="task-item" data-view="team-tasks"><i data-lucide="list"></i> Tâches d'équipe</button>
+        <button class="task-item" data-view="my-tasks"><i data-lucide="clipboard-check"></i> Mes tâches</button>
+        <button class="task-item" data-view="files"><i data-lucide="folder"></i> Fichiers</button>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="new-message-btn" id="newMessageBtn"><i data-lucide="plus"></i> Nouveau message</button>
+    </div>
+  </aside>
+
+  <!-- Zone centrale -->
+  <main class="main-panel" id="mainPanel">
+    <!-- Chat views -->
+    <div id="chat-general" class="chat-view">
+      <div class="top-bar">
+        <div class="channel-header"><i data-lucide="hash"></i> général</div>
+        <div class="search-box"><i data-lucide="search"></i><input placeholder="Rechercher dans #général"></div>
+      </div>
+      <div class="message-feed" id="generalFeed">
+        <!-- Messages injectés dynamiquement -->
+      </div>
+      <div class="message-input-area">
+        <div class="input-actions">
+          <button class="icon-btn"><i data-lucide="paperclip"></i></button>
+        </div>
+        <input type="text" class="message-input" placeholder="Message dans #général" id="generalInput">
+        <button class="send-btn" id="generalSend"><i data-lucide="send"></i></button>
+      </div>
+    </div>
+
+    <!-- Autres vues chat (cachées) -->
+    <div id="chat-lancement-nova" class="chat-view" style="display:none;">
+      <div class="top-bar"><div class="channel-header"><i data-lucide="hash"></i> lancement-nova</div></div>
+      <div class="message-feed"><p class="empty-state">Bienvenue dans le canal lancement-nova.</p></div>
+      <div class="message-input-area"><input class="message-input" placeholder="Message..."><button class="send-btn"><i data-lucide="send"></i></button></div>
+    </div>
+    <div id="chat-design-system" class="chat-view" style="display:none;">
+      <div class="top-bar"><div class="channel-header"><i data-lucide="hash"></i> design-system</div></div>
+      <div class="message-feed"><p class="empty-state">Discussions autour du design system.</p></div>
+      <div class="message-input-area"><input class="message-input" placeholder="Message..."><button class="send-btn"><i data-lucide="send"></i></button></div>
+    </div>
+
+    <!-- DM views -->
+    <div id="dm-camille" class="chat-view" style="display:none;">
+      <div class="top-bar"><div class="channel-header"><span class="dm-avatar">CM</span> Camille M.</div></div>
+      <div class="message-feed"><p class="empty-state">Conversation avec Camille.</p></div>
+      <div class="message-input-area"><input class="message-input" placeholder="Message privé..."><button class="send-btn"><i data-lucide="send"></i></button></div>
+    </div>
+    <div id="dm-julien" class="chat-view" style="display:none;">
+      <div class="top-bar"><div class="channel-header"><span class="dm-avatar">JD</span> Julien D.</div></div>
+      <div class="message-feed"><p class="empty-state">Conversation avec Julien.</p></div>
+      <div class="message-input-area"><input class="message-input" placeholder="Message privé..."><button class="send-btn"><i data-lucide="send"></i></button></div>
+    </div>
+    <div id="dm-sarah" class="chat-view" style="display:none;">
+      <div class="top-bar"><div class="channel-header"><span class="dm-avatar">SL</span> Sarah L.</div></div>
+      <div class="message-feed"><p class="empty-state">Conversation avec Sarah.</p></div>
+      <div class="message-input-area"><input class="message-input" placeholder="Message privé..."><button class="send-btn"><i data-lucide="send"></i></button></div>
+    </div>
+
+    <!-- Task views -->
+    <div id="team-tasks" class="task-view">
+      <h2 style="color:white; font-weight:600; font-size:1.2rem;">Tâches d'équipe</h2>
+      <div class="task-card" onclick="this.classList.toggle('done')">
+        <div class="task-checkbox"><i data-lucide="check" style="width:14px;height:14px;"></i></div>
+        <span class="task-title">Finaliser la landing page</span><span class="task-assignee">Camille</span>
+      </div>
+      <div class="task-card" onclick="this.classList.toggle('done')">
+        <div class="task-checkbox"><i data-lucide="check" style="width:14px;height:14px;"></i></div>
+        <span class="task-title">Intégration API paiement</span><span class="task-assignee">Julien</span>
+      </div>
+      <div class="task-card done" onclick="this.classList.toggle('done')">
+        <div class="task-checkbox"><i data-lucide="check" style="width:14px;height:14px;"></i></div>
+        <span class="task-title">Rédaction des emails</span><span class="task-assignee">Sarah</span>
+      </div>
+    </div>
+    <div id="my-tasks" class="task-view">
+      <h2 style="color:white; font-weight:600; font-size:1.2rem;">Mes tâches</h2>
+      <div class="task-card" onclick="this.classList.toggle('done')">
+        <div class="task-checkbox"><i data-lucide="check" style="width:14px;height:14px;"></i></div>
+        <span class="task-title">Revoir le design system</span>
+      </div>
+      <div class="task-card done" onclick="this.classList.toggle('done')">
+        <div class="task-checkbox"><i data-lucide="check" style="width:14px;height:14px;"></i></div>
+        <span class="task-title">Préparer la réunion de sprint</span>
+      </div>
+    </div>
+    <div id="files" class="task-view">
+      <h2 style="color:white; font-weight:600; font-size:1.2rem;">Fichiers récents</h2>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div style="background:#26262b; border-radius:12px; padding:16px; width:150px; text-align:center;">
+          <i data-lucide="file-text" style="width:32px;height:32px;color:#818cf8;"></i>
+          <p style="font-size:0.8rem; margin-top:8px;">landing_v3.fig</p>
+        </div>
+        <div style="background:#26262b; border-radius:12px; padding:16px; width:150px; text-align:center;">
+          <i data-lucide="file-spreadsheet" style="width:32px;height:32px;color:#34d399;"></i>
+          <p style="font-size:0.8rem; margin-top:8px;">roadmap.xlsx</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Panneau de thread -->
+  <aside class="detail-panel" id="detailPanel">
+    <div class="detail-header">
+      <i data-lucide="message-square"></i> Fil de discussion
+      <i data-lucide="x" id="closeThreadBtn" style="margin-left:auto; cursor:pointer;"></i>
+    </div>
+    <div class="detail-thread" id="threadContent">
+      <p class="empty-state">Cliquez sur "Répondre" pour ouvrir un fil.</p>
+    </div>
+    <div class="thread-input">
+      <input type="text" placeholder="Répondre au fil...">
+      <button class="send-btn" style="width:36px;height:36px;"><i data-lucide="send" style="width:16px;height:16px;"></i></button>
+    </div>
+  </aside>
+</div>
+
+<script>
+  (function() {
+    lucide.createIcons();
+
+    // Navigation
+    const channelItems = document.querySelectorAll('.channel-item');
+    const dmItems = document.querySelectorAll('.dm-item');
+    const taskItems = document.querySelectorAll('.task-item');
+    const allChatViews = document.querySelectorAll('.chat-view');
+    const allTaskViews = document.querySelectorAll('.task-view');
+    const detailPanel = document.getElementById('detailPanel');
+    const threadContent = document.getElementById('threadContent');
+    const closeThreadBtn = document.getElementById('closeThreadBtn');
+
+    function hideAllViews() {
+      allChatViews.forEach(v => v.style.display = 'none');
+      allTaskViews.forEach(v => v.classList.remove('active'));
+    }
+
+    function showChatView(id) {
+      hideAllViews();
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+    }
+
+    function showTaskView(id) {
+      hideAllViews();
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+
+    channelItems.forEach(btn => {
+      btn.addEventListener('click', () => {
+        channelItems.forEach(b => b.classList.remove('active'));
+        dmItems.forEach(b => b.classList.remove('active'));
+        taskItems.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showChatView('chat-' + btn.dataset.channel);
+      });
+    });
+
+    dmItems.forEach(btn => {
+      btn.addEventListener('click', () => {
+        channelItems.forEach(b => b.classList.remove('active'));
+        dmItems.forEach(b => b.classList.remove('active'));
+        taskItems.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showChatView('dm-' + btn.dataset.dm);
+      });
+    });
+
+    taskItems.forEach(btn => {
+      btn.addEventListener('click', () => {
+        channelItems.forEach(b => b.classList.remove('active'));
+        dmItems.forEach(b => b.classList.remove('active'));
+        taskItems.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showTaskView(btn.dataset.view);
+      });
+    });
+
+    document.getElementById('newMessageBtn').addEventListener('click', () => {
+      dmItems[0].click();
+    });
+
+    // Thread : ouvrir/fermer
+    function openThread(messageElement) {
+      detailPanel.classList.add('open');
+      const author = messageElement.querySelector('.msg-author')?.textContent || 'Message';
+      threadContent.innerHTML = `
+        <div class="thread-message"><strong>${author}</strong><br>Discussion sur ce message.</div>
+      `;
+    }
+
+    closeThreadBtn.addEventListener('click', () => {
+      detailPanel.classList.remove('open');
+    });
+
+    // Génération des messages du canal général avec actions
+    const generalFeed = document.getElementById('generalFeed');
+    const messagesData = [
+      { author: 'Camille M.', avatar: 'CM', text: 'Nouvelle version des maquettes disponible sur Figma.', time: '10:32', reactions: ['👍', '❤️'] },
+      { author: 'Julien D.', avatar: 'JD', text: 'Parfait, je les intègre cet après-midi.', time: '10:35', reactions: ['✅'] },
+      { author: 'Sarah L.', avatar: 'SL', text: 'Les contenus sont prêts, je les envoie sur le canal design.', time: '10:41', reactions: [] }
+    ];
+
+    function renderMessages() {
+      generalFeed.innerHTML = '';
+      messagesData.forEach((msg, index) => {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'message';
+        msgDiv.dataset.index = index;
+        msgDiv.innerHTML = `
+          <div class="msg-avatar">${msg.avatar}</div>
+          <div class="msg-body">
+            <div class="msg-author">${msg.author} <span class="msg-time">${msg.time}</span></div>
+            <div class="msg-text">${msg.text}</div>
+            <div class="msg-actions">
+              <button class="msg-action-btn reply-btn"><i data-lucide="corner-down-right"></i> Répondre</button>
+              <button class="msg-action-btn react-btn"><i data-lucide="smile"></i> Réagir</button>
+              ${msg.reactions.map(r => `<span class="reaction-badge">${r}</span>`).join('')}
+            </div>
+          </div>
+        `;
+        generalFeed.appendChild(msgDiv);
+      });
+      lucide.createIcons();
+
+      // Attacher les événements aux boutons
+      document.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const messageEl = e.target.closest('.message');
+          openThread(messageEl);
+        });
+      });
+      document.querySelectorAll('.react-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const reactionBadge = document.createElement('span');
+          reactionBadge.className = 'reaction-badge';
+          reactionBadge.textContent = '👋';
+          const actionsDiv = e.target.closest('.msg-actions');
+          actionsDiv.appendChild(reactionBadge);
+        });
+      });
+    }
+
+    renderMessages();
+
+    // Envoi de message dans général
+    document.getElementById('generalSend').addEventListener('click', () => {
+      const input = document.getElementById('generalInput');
+      if (input.value.trim() !== '') {
+        messagesData.push({ author: 'Vous', avatar: 'VO', text: input.value, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), reactions: [] });
+        input.value = '';
+        renderMessages();
+        generalFeed.scrollTop = generalFeed.scrollHeight;
+      }
+    });
+
+    // Activation initiale
+    showChatView('chat-general');
+  })();
+</script>
+</body>
+</html>
